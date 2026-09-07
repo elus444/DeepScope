@@ -1,4 +1,5 @@
 import os
+import uvicorn
 from config import OPENAI_API_KEY
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from utils.document_parser import extract_text_from_file, chunk_text, SUPPORTED_EXTENSIONS
@@ -17,9 +18,13 @@ from utils.logger import api_logger
 
 app = FastAPI()
 
+# CORS: use FRONTEND_URL env var in production, allow all in dev
+frontend_url = os.getenv("FRONTEND_URL")
+allowed_origins = [frontend_url] if frontend_url else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For dev only
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -524,3 +529,9 @@ def get_database_stats():
 
     api_logger.info(f"Database stats retrieved: {stats}")
     return stats
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
+

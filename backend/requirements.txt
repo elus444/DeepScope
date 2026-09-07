@@ -1,0 +1,22 @@
+# Web Framework & Server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# AI & LLM
+openai
+langgraph
+
+# Vector Search & Math
+faiss-cpu
+numpy
+
+# Document Parsers
+pdfplumber
+python-docx
+beautifulsoup4
+lxml
+
+# Data Validation & Configuration
+pydantic
+python-dotenv
