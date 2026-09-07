@@ -9,7 +9,7 @@ from utils.logger import agent_logger
 class SummarizerAgent:
     def __init__(self):
         self.name = "Summarizer Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def summarize(self, query: str, chunks: list[str], conversation_context: str = ""):

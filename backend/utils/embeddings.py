@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 from utils.logger import api_logger
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
 
 def get_embedding(text: str, model="text-embedding-3-small"):
     """

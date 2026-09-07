@@ -9,7 +9,7 @@ from utils.logger import agent_logger
 class EditorAgent:
     def __init__(self):
         self.name = "Editor Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def edit(self, query: str, summary: str, critique: str, chunks: list[str]):
