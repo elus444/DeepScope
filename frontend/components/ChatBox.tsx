@@ -14,6 +14,8 @@ interface Document {
   chunks: number;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -39,7 +41,7 @@ export default function ChatBox() {
 
   const fetchDocuments = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/documents");
+      const res = await axios.get(`${API_BASE_URL}/documents`);
       const multiDocs = res.data.multi_docs || [];
       setDocuments(multiDocs);
 
@@ -84,7 +86,7 @@ export default function ChatBox() {
     formData.append("file", file);
 
     try {
-      const res = await axios.post("http://localhost:8000/upload-v2", formData, {
+      const res = await axios.post(`${API_BASE_URL}/upload-v2`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
@@ -123,7 +125,7 @@ export default function ChatBox() {
 
       if (useAgents) {
         // Use multi-doc endpoint with agents
-        endpoint = "http://localhost:8000/ask-v2";
+        endpoint = `${API_BASE_URL}/ask-v2`;
         payload = {
           query: currentQuery,
           top_k: 5,
@@ -132,7 +134,7 @@ export default function ChatBox() {
         };
       } else {
         // Simple RAG without agents (legacy)
-        endpoint = "http://localhost:8000/ask";
+        endpoint = `${API_BASE_URL}/ask`;
         payload = {
           query: currentQuery,
           top_k: 5,
