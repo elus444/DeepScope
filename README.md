@@ -6,6 +6,15 @@ This **Multi-Agent architecture** (Researcher, Summarizer, Critic, and Editor) s
 
 ---
 
+## ⚡ Free 1-Click Deployment
+
+Deploy the entire stack for free with one click:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/elus444/DeepScope)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/elus444/DeepScope&root-directory=frontend)
+
+---
+
 ## 🚀 Features
 
 - 🧠 **Multi-Agent Workflow**
