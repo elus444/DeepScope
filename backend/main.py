@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
 orchestrator = Orchestrator()
 
 @app.get("/health")
@@ -533,5 +533,5 @@ def get_database_stats():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 

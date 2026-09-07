@@ -9,7 +9,7 @@ from utils.logger import agent_logger
 class CriticAgent:
     def __init__(self):
         self.name = "Critic Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def critique(self, query: str, summary: str, chunks: list[str]):
