@@ -62,6 +62,71 @@
            bg-violet-50 text-violet-700 border border-violet-100
            transition-all duration-150 hover:bg-violet-100;
   }
+
+  /* Rendered markdown inside a chat bubble (see MessageContent.tsx).
+     Hand-styled rather than pulling in @tailwindcss/typography for one
+     use site -- headings/lists/bold text all need to read as part of
+     the same chat bubble, not a full article layout. */
+  .prose-chat {
+    @apply text-sm leading-relaxed;
+  }
+  .prose-chat > :first-child {
+    margin-top: 0;
+  }
+  .prose-chat > :last-child {
+    margin-bottom: 0;
+  }
+  .prose-chat p {
+    @apply mb-2.5;
+  }
+  .prose-chat h1,
+  .prose-chat h2,
+  .prose-chat h3 {
+    @apply font-semibold text-slate-900 mt-4 mb-2;
+  }
+  .prose-chat h1 {
+    @apply text-base;
+  }
+  .prose-chat h2 {
+    @apply text-[15px];
+  }
+  .prose-chat h3 {
+    @apply text-sm;
+  }
+  .prose-chat strong {
+    @apply font-semibold text-slate-900;
+  }
+  .prose-chat ul {
+    @apply list-disc pl-5 mb-2.5 space-y-1;
+  }
+  .prose-chat ol {
+    @apply list-decimal pl-5 mb-2.5 space-y-1;
+  }
+  .prose-chat li {
+    @apply pl-0.5;
+  }
+  .prose-chat code {
+    @apply px-1 py-0.5 rounded bg-violet-50 text-violet-700 text-[13px] font-mono;
+  }
+  .prose-chat pre {
+    @apply bg-slate-900 text-slate-100 rounded-xl p-3 mb-2.5 overflow-x-auto text-[13px];
+  }
+  .prose-chat pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+  .prose-chat blockquote {
+    @apply border-l-2 border-violet-200 pl-3 italic text-slate-600 mb-2.5;
+  }
+  .prose-chat table {
+    @apply w-full text-xs mb-2.5 border-collapse;
+  }
+  .prose-chat th,
+  .prose-chat td {
+    @apply border border-violet-100 px-2 py-1 text-left;
+  }
+  .prose-chat th {
+    @apply bg-violet-50 font-semibold;
+  }
 }
 
 /* Ambient float for the hero orb -- slow, so it reads as "alive" without being distracting */

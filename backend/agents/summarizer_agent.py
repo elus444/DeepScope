@@ -66,6 +66,13 @@ CRITICAL RULES - READ CAREFULLY:
    the claim -- e.g. "The deadline is March 1st [2]." Use multiple
    numbers if a sentence draws on more than one source, e.g. "[1][3]".
    Never invent a number that isn't in the context above.
+7. Start directly with the answer. Never open with meta-commentary like
+   "Here is the summary" / "Based on the provided context" / "Here is
+   the refined summary based strictly on the context:" -- the user
+   already knows what they asked for.
+8. Use markdown (headers, **bold**, bullet lists) only when the answer
+   genuinely has multiple sections or a list of items. For a short
+   factual answer, plain sentences are better than forcing headers.
 
 RESPONSE LENGTH:
 SIMPLE QUESTIONS (what is, how much, when, who):
