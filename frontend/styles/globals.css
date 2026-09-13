@@ -1,80 +1,117 @@
 @import "tailwindcss";
 
+@theme {
+  --color-violet-50: #f7f5ff;
+  --color-violet-100: #efe9ff;
+  --color-violet-200: #ddd2ff;
+  --color-violet-300: #c1adff;
+  --color-violet-400: #a17ff5;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
-    @apply bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen;
+    @apply min-h-screen text-slate-800;
+    background:
+      radial-gradient(ellipse 900px 600px at 15% -10%, rgba(196, 181, 253, 0.55), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 110% 10%, rgba(244, 194, 255, 0.45), transparent 55%),
+      radial-gradient(ellipse 1200px 800px at 50% 120%, rgba(199, 210, 254, 0.5), transparent 60%),
+      #f6f4fb;
+    background-attachment: fixed;
   }
 }
 
 @layer components {
-  .chat-message {
-    @apply rounded-lg p-4 shadow-sm;
-    animation: slideUp 0.4s ease-out;
+  /* Frosted-glass surface used for the sidebar, cards, and the input bar */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(124,58,237,0.08)];
   }
 
-  .chat-message-user {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white;
-  }
-
-  .chat-message-assistant {
-    @apply bg-white border border-gray-200;
+  .glass-solid {
+    @apply bg-white border border-violet-100/80 shadow-[0_8px_30px_rgb(124,58,237,0.08)];
   }
 
   .btn-primary {
-    @apply px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg
-           font-medium shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700
-           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-5 py-2.5 rounded-xl font-medium text-white
+           bg-gradient-to-br from-violet-500 to-violet-700
+           shadow-[0_4px_16px_rgba(124,58,237,0.35)]
+           transition-all duration-200 ease-out
+           hover:shadow-[0_6px_22px_rgba(124,58,237,0.45)] hover:-translate-y-0.5
+           active:translate-y-0 active:shadow-[0_2px_10px_rgba(124,58,237,0.35)]
+           disabled:opacity-50 disabled:pointer-events-none disabled:translate-y-0;
   }
 
-  .btn-secondary {
-    @apply px-6 py-2.5 bg-white text-gray-700 rounded-lg font-medium shadow-sm
-           hover:shadow-md border border-gray-300 hover:border-gray-400
-           transition-all duration-200;
+  .btn-ghost {
+    @apply px-4 py-2 rounded-xl font-medium text-slate-600
+           hover:bg-violet-50 hover:text-violet-700
+           transition-colors duration-150;
   }
 
-  .input-field {
-    @apply w-full px-4 py-2.5 rounded-lg border border-gray-300
-           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-           transition-all duration-200;
-  }
-
-  .card {
-    @apply bg-white rounded-xl shadow-md p-6 border border-gray-100;
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+           bg-violet-50 text-violet-700 border border-violet-100
+           transition-all duration-150 hover:bg-violet-100;
   }
 }
 
-@layer utilities {
-  .animate-slide-up {
-    animation: slideUp 0.4s ease-out;
-  }
+/* Ambient float for the hero orb -- slow, so it reads as "alive" without being distracting */
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-14px) scale(1.03); }
 }
 
-@keyframes slideUp {
-  0% {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+@keyframes orb-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
 }
 
-/* Custom scrollbar */
+.orb-float {
+  animation: orb-float 6s ease-in-out infinite;
+}
+
+.orb-glow {
+  animation: orb-glow 4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #6d28d9 0%, #a855f7 25%, #6d28d9 50%, #a855f7 75%, #6d28d9 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Custom scrollbar -- thin, violet-tinted, unobtrusive */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(139, 92, 246, 0.25);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(139, 92, 246, 0.45);
 }
