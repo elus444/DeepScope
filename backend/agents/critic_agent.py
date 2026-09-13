@@ -70,7 +70,7 @@ GAPS: [Hallucinations OR missing context info]
 SUGGESTIONS: [Stick to context OR add missing context info]"""
 
         try:
-            model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+            model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
             agent_logger.info(f"{self.name}: 🤖 Invoking LLM - Model: {model}, Temperature: 0.4")
 
             response = self.client.models.generate_content(

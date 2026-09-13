@@ -133,7 +133,7 @@ AI-Research-Assistant/
 
 ### 🤖 AI 
 - **LangGraph**: Agent workflow orchestration
-- **Gemini**: gemini-2.5-flash and text-embedding-004 models
+- **Gemini**: gemini-3.6-flash and gemini-embedding-2 models
 
 ---
 
@@ -176,8 +176,8 @@ Create a `.env` file in the root directory:
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 VECTOR_DB_PATH=./backend/db/documents
-EMBEDDING_MODEL=text-embedding-004
-LLM_MODEL=gemini-2.5-flash
+EMBEDDING_MODEL=gemini-embedding-2
+LLM_MODEL=gemini-3.6-flash
 BACKEND_PORT=8000
 ```
 
@@ -244,7 +244,7 @@ Supported formats:
 
 Documents are:
 1. Chunked into ~500 character segments
-2. Embedded using Gemini's text-embedding-004
+2. Embedded using Gemini's gemini-embedding-2
 3. Stored in FAISS vector indexes
 4. Retrieved via semantic similarity search
 

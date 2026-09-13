@@ -11,8 +11,8 @@ services:
       - key: VECTOR_DB_PATH
         value: ./db/documents
       - key: EMBEDDING_MODEL
-        value: text-embedding-004
+        value: gemini-embedding-2
       - key: LLM_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.6-flash
       - key: FRONTEND_URL
         sync: false

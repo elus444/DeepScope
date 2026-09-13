@@ -75,7 +75,7 @@ WARNING: If you add information not in the context, the answer is WRONG.
 Your answer (strictly from context only):"""
 
         try:
-            model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+            model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
             agent_logger.info(f"{self.name}: 🤖 Invoking LLM - Model: {model}, Temperature: 0.2")
 
             response = self.client.models.generate_content(

@@ -9,7 +9,7 @@ def get_embedding(text: str, model: str = None):
     Get embedding vector for text using Gemini
     """
     if model is None:
-        model = os.getenv("EMBEDDING_MODEL", "text-embedding-004")
+        model = os.getenv("EMBEDDING_MODEL", "gemini-embedding-2")
 
     api_logger.debug(f"🔢 Generating embedding - Model: {model}, Text length: {len(text)} chars")
 
@@ -28,7 +28,7 @@ def call_gemini(prompt: str, model: str = None):
     Generic Gemini API call wrapper for agents
     """
     if model is None:
-        model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+        model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     response = client.models.generate_content(
         model=model,

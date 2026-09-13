@@ -286,7 +286,7 @@ async def ask(req: AskRequest):
     context = "\n\n".join(retrieved)
 
     prompt = f"Answer using context below:\n{context}\n\nQuestion: {req.query}"
-    model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
     api_logger.info(f"🤖 Invoking LLM - Model: {model}")
 
     response = client.models.generate_content(
