@@ -76,6 +76,16 @@ export default function ChatBox() {
     }
   };
 
+  const deleteSession = async (session: ChatSessionOut) => {
+    try {
+      await api.delete(`/chat/sessions/${session.id}`);
+      setSessions((prev) => prev.filter((s) => s.id !== session.id));
+      if (session.id === sessionId) startNewConversation();
+    } catch (err) {
+      console.error("Failed to delete session:", err);
+    }
+  };
+
   const deleteDocument = async (docId: string) => {
     try {
       await api.delete(`/documents/${docId}`);
@@ -181,6 +191,7 @@ export default function ChatBox() {
         activeSessionId={sessionId}
         onNewChat={startNewConversation}
         onOpenSession={openSession}
+        onDeleteSession={deleteSession}
         onOpenDocuments={() => setDocumentsOpen(true)}
         documentCount={documents.length}
       />
