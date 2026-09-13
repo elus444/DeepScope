@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { api, DocumentOut, ChatSessionOut, MessageOut, AskResponse } from "../lib/api";
+import { api, streamAsk, DocumentOut, ChatSessionOut, MessageOut, CitationOut } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import PipelineView, { INITIAL_PIPELINE_STAGES, PipelineStage } from "./PipelineView";
+import MessageContent from "./MessageContent";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  citations?: CitationOut[];
 }
 
 export default function ChatBox() {
@@ -16,12 +19,14 @@ export default function ChatBox() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [documents, setDocuments] = useState<DocumentOut[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>(""); // "" = search all documents
-  const [workflowLog, setWorkflowLog] = useState<string[]>([]);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
+  const [streamingText, setStreamingText] = useState("");
+  const [streamingCitations, setStreamingCitations] = useState<CitationOut[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentAgent, setCurrentAgent] = useState("");
   const [sessionId, setSessionId] = useState<string>("");
   const [sessions, setSessions] = useState<ChatSessionOut[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeCitation, setActiveCitation] = useState<CitationOut | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function ChatBox() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingText]);
 
   const fetchDocuments = async () => {
     try {
@@ -54,7 +59,7 @@ export default function ChatBox() {
   const startNewConversation = () => {
     setMessages([]);
     setSessionId("");
-    setWorkflowLog([]);
+    setPipelineStages([]);
     setInput("");
     setShowHistory(false);
   };
@@ -62,9 +67,9 @@ export default function ChatBox() {
   const openSession = async (session: ChatSessionOut) => {
     try {
       const res = await api.get<MessageOut[]>(`/chat/sessions/${session.id}/messages`);
-      setMessages(res.data.map((m) => ({ role: m.role, content: m.content })));
+      setMessages(res.data.map((m) => ({ role: m.role, content: m.content, citations: m.sources })));
       setSessionId(session.id);
-      setWorkflowLog([]);
+      setPipelineStages([]);
       setShowHistory(false);
     } catch (err) {
       console.error("Failed to load session:", err);
@@ -113,14 +118,15 @@ export default function ChatBox() {
   const sendMessage = async () => {
     if (!input.trim() || isProcessing) return;
 
-    const userMessage: Message = { role: "user", content: input };
     const currentQuery = input;
-
     setInput("");
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, { role: "user", content: currentQuery }]);
     setIsProcessing(true);
-    setWorkflowLog([]);
-    setCurrentAgent("[1/4] Research Agent: Searching your documents...");
+    setPipelineStages(INITIAL_PIPELINE_STAGES);
+    setStreamingText("");
+    setStreamingCitations([]);
+
+    let fullAnswer = "";
 
     try {
       let activeSessionId = sessionId;
@@ -133,20 +139,37 @@ export default function ChatBox() {
         setSessions((prev) => [created.data, ...prev]);
       }
 
-      const res = await api.post<AskResponse>(`/chat/sessions/${activeSessionId}/messages`, {
-        query: currentQuery,
-        top_k: 5,
-        document_id: selectedDocumentId || null,
-      });
-
-      setWorkflowLog(res.data.workflow_log || []);
-      setMessages((prev) => [...prev, { role: "assistant", content: res.data.answer }]);
-      setCurrentAgent("");
+      await streamAsk(
+        activeSessionId,
+        { query: currentQuery, top_k: 5, document_id: selectedDocumentId || null },
+        (event) => {
+          if (event.type === "stage") {
+            setPipelineStages((prev) =>
+              prev.map((s) =>
+                s.name === event.stage
+                  ? { ...s, status: event.status === "start" ? "active" : "done", detail: event.status === "done" ? event.detail : s.detail }
+                  : s
+              )
+            );
+          } else if (event.type === "citations") {
+            setStreamingCitations(event.citations);
+          } else if (event.type === "answer_chunk") {
+            fullAnswer += event.text;
+            setStreamingText(fullAnswer);
+          } else if (event.type === "done") {
+            setMessages((prev) => [...prev, { role: "assistant", content: fullAnswer, citations: event.citations }]);
+            setStreamingText("");
+            setStreamingCitations([]);
+          } else if (event.type === "error") {
+            setMessages((prev) => [...prev, { role: "assistant", content: event.message }]);
+            setStreamingText("");
+          }
+        }
+      );
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.response?.data?.detail || "Error contacting backend.";
-      setMessages((prev) => [...prev, { role: "assistant", content: errorMsg }]);
-      setCurrentAgent("");
+      setMessages((prev) => [...prev, { role: "assistant", content: err.message || "Error contacting backend." }]);
+      setStreamingText("");
     } finally {
       setIsProcessing(false);
     }
@@ -315,18 +338,34 @@ export default function ChatBox() {
               </div>
             )}
 
-            {/* Workflow Log */}
-            {workflowLog.length > 0 && (
+            {/* Live agent pipeline */}
+            {pipelineStages.length > 0 && (
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Agent Pipeline</h3>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  {workflowLog.map((log, idx) => (
-                    <div key={idx} className="text-xs text-blue-700 py-1 flex items-start">
-                      <span className="text-blue-500 mr-2">•</span>
-                      {log}
-                    </div>
-                  ))}
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Agent Pipeline</h3>
+                <PipelineView stages={pipelineStages} />
+              </div>
+            )}
+
+            {/* Expanded citation */}
+            {activeCitation && (
+              <div className="card border-2 border-blue-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-blue-700">
+                    Source [{activeCitation.index}] — {activeCitation.filename}
+                  </h3>
+                  <button
+                    onClick={() => setActiveCitation(null)}
+                    className="text-gray-400 hover:text-gray-600 text-sm"
+                  >
+                    ✕
+                  </button>
                 </div>
+                <p className="text-xs text-gray-500 mb-2">
+                  Similarity: {(activeCitation.similarity * 100).toFixed(0)}%
+                </p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap bg-blue-50 p-3 rounded-lg border border-blue-100">
+                  {activeCitation.content}
+                </p>
               </div>
             )}
           </div>
@@ -336,7 +375,7 @@ export default function ChatBox() {
             <div className="card h-[calc(100vh-120px)] flex flex-col">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.length === 0 && (
+                {messages.length === 0 && !streamingText && (
                   <div className="text-center py-16">
                     <h3 className="text-xl font-bold text-gray-800 mb-2">Start a Conversation</h3>
                     <p className="text-gray-600 text-sm mb-4">
@@ -360,24 +399,55 @@ export default function ChatBox() {
                         </span>
                       </div>
                       <div className={`text-sm leading-relaxed ${m.role === "user" ? "text-white" : "text-gray-800"}`}>
-                        {m.content}
+                        {m.role === "assistant" ? (
+                          <MessageContent
+                            content={m.content}
+                            citations={m.citations || []}
+                            onCiteClick={setActiveCitation}
+                          />
+                        ) : (
+                          <span className="whitespace-pre-wrap">{m.content}</span>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
 
-                {isProcessing && (
+                {/* In-progress streamed answer */}
+                {isProcessing && streamingText && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] chat-message chat-message-assistant">
+                      <div className="flex items-center mb-2">
+                        <span className="text-sm font-semibold text-gray-700">AI Assistant</span>
+                      </div>
+                      <div className="text-sm leading-relaxed text-gray-800">
+                        <MessageContent
+                          content={streamingText}
+                          citations={streamingCitations}
+                          onCiteClick={setActiveCitation}
+                        />
+                        <span className="inline-block w-1.5 h-4 ml-0.5 bg-gray-400 animate-pulse align-middle" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pipeline running, no text yet */}
+                {isProcessing && !streamingText && (
                   <div className="flex justify-start">
                     <div className="max-w-[80%] bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 shadow-sm border border-orange-200 animate-pulse">
-                      <div className="flex items-center mb-2">
+                      <div className="flex items-center">
                         <div className="flex space-x-1 mr-3">
                           <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }}></div>
                           <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                           <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
                         </div>
-                        <span className="text-sm font-semibold text-orange-700">AI is thinking...</span>
+                        <span className="text-sm font-semibold text-orange-700">
+                          {pipelineStages.find((s) => s.status === "active")
+                            ? `Running ${pipelineStages.find((s) => s.status === "active")!.name}...`
+                            : "Working..."}
+                        </span>
                       </div>
-                      <div className="text-xs text-orange-600 italic">{currentAgent || "Processing your request..."}</div>
                     </div>
                   </div>
                 )}

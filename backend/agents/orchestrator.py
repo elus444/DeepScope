@@ -3,10 +3,49 @@ Orchestrator: Coordinates the multi-agent workflow using LangGraph
 
 Uses LangGraph's state graph for conditional routing and visualization.
 """
-from typing import Optional
+from typing import Optional, Iterator
 from supabase import Client
 from agents.langgraph_workflow import agent_workflow
 from agents.agent_state import AgentState
+
+
+def _build_initial_state(
+    query: str,
+    supabase: Client,
+    top_k: int,
+    document_id: Optional[str],
+    conversation_context: str,
+) -> AgentState:
+    return {
+        # Input
+        "query": query,
+        "top_k": top_k,
+        "document_id": document_id,
+        "conversation_context": conversation_context,
+        "supabase": supabase,
+
+        # Outputs (will be populated by agents)
+        "chunks": [],
+        "citations": [],
+        "num_chunks_found": 0,
+        "initial_summary": "",
+        "critique": "",
+        "has_gaps": False,
+        "suggestions": [],
+        "final_answer": "",
+        "editing_applied": False,
+
+        # Metadata
+        "workflow_log": [],
+        "status": "initialized",
+        "error_message": None,
+
+        # Execution flags
+        "research_complete": False,
+        "summary_complete": False,
+        "critique_complete": False,
+        "editor_complete": False,
+    }
 
 
 class Orchestrator:
@@ -43,74 +82,67 @@ class Orchestrator:
         Returns:
             dict containing final answer and workflow metadata
         """
-
-        initial_state: AgentState = {
-            # Input
-            "query": query,
-            "top_k": top_k,
-            "document_id": document_id,
-            "conversation_context": conversation_context,
-            "supabase": supabase,
-
-            # Outputs (will be populated by agents)
-            "chunks": [],
-            "sources": [],
-            "num_chunks_found": 0,
-            "initial_summary": "",
-            "critique": "",
-            "has_gaps": False,
-            "suggestions": [],
-            "final_answer": "",
-            "editing_applied": False,
-
-            # Metadata
-            "workflow_log": [],
-            "status": "initialized",
-            "error_message": None,
-
-            # Execution flags
-            "research_complete": False,
-            "summary_complete": False,
-            "critique_complete": False,
-            "editor_complete": False,
-        }
+        initial_state = _build_initial_state(query, supabase, top_k, document_id, conversation_context)
 
         try:
-            # Execute LangGraph workflow
             final_state = self.workflow.invoke(initial_state)
-
-            # Check for errors
-            if final_state.get("status") == "error":
-                return {
-                    "status": "error",
-                    "answer": final_state.get("error_message", "Unknown error occurred"),
-                    "workflow_log": final_state.get("workflow_log", [])
-                }
-
-            # Return successful result
-            return {
-                "status": "success",
-                "answer": final_state["final_answer"],
-                "sources": final_state.get("sources", []),
-                "workflow_log": final_state.get("workflow_log", []),
-                "metadata": {
-                    "num_chunks": final_state.get("num_chunks_found", 0),
-                    "initial_summary_length": len(final_state.get("initial_summary", "")),
-                    "final_answer_length": len(final_state["final_answer"]),
-                    "critique_applied": final_state.get("critique_complete", False),
-                    "editing_applied": final_state.get("editing_applied", False),
-                    "has_gaps": final_state.get("has_gaps", False),
-                    "workflow_type": "langgraph"
-                }
-            }
-
+            return self._format_result(final_state)
         except Exception as e:
             return {
                 "status": "error",
                 "answer": f"Error in LangGraph workflow: {str(e)}",
                 "workflow_log": [],
+                "citations": [],
                 "metadata": {}
             }
+
+    def stream_query(
+        self,
+        query: str,
+        supabase: Client,
+        top_k: int = 5,
+        document_id: Optional[str] = None,
+        conversation_context: str = "",
+    ) -> Iterator[AgentState]:
+        """
+        Same pipeline as process_query, but yields the state after every
+        node finishes (LangGraph's `stream_mode="values"`) instead of
+        only returning the final result. The caller diffs consecutive
+        states' `*_complete` flags to know which agent just finished --
+        that's what powers the frontend's live pipeline visualization.
+        The final yielded state is the same as process_query's result.
+        """
+        initial_state = _build_initial_state(query, supabase, top_k, document_id, conversation_context)
+        yield from self.workflow.stream(initial_state, stream_mode="values")
+
+    def _format_result(self, final_state: AgentState) -> dict:
+        if final_state.get("status") == "error":
+            return {
+                "status": "error",
+                "answer": final_state.get("error_message", "Unknown error occurred"),
+                "workflow_log": final_state.get("workflow_log", []),
+                "citations": [],
+            }
+
+        return {
+            "status": "success",
+            "answer": final_state["final_answer"],
+            "citations": final_state.get("citations", []),
+            "workflow_log": final_state.get("workflow_log", []),
+            "metadata": {
+                "num_chunks": final_state.get("num_chunks_found", 0),
+                "initial_summary_length": len(final_state.get("initial_summary", "")),
+                "final_answer_length": len(final_state["final_answer"]),
+                "critique_applied": final_state.get("critique_complete", False),
+                "editing_applied": final_state.get("editing_applied", False),
+                "has_gaps": final_state.get("has_gaps", False),
+                "workflow_type": "langgraph"
+            }
+        }
+
+    def format_result(self, final_state: AgentState) -> dict:
+        """Public wrapper so callers driving stream_query can format the last state."""
+        return self._format_result(final_state)
 
     def get_workflow_diagram(self) -> str:
         """
