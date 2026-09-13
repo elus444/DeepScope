@@ -2,14 +2,15 @@
 Editor Agent: Refines and polishes the final answer based on critic feedback
 """
 import os
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from utils.logger import agent_logger
 
 
 class EditorAgent:
     def __init__(self):
         self.name = "Editor Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def edit(self, query: str, summary: str, critique: str, chunks: list[str]):
@@ -74,25 +75,25 @@ If the context doesn't contain enough information to fully answer the question, 
 Provide the corrected final answer (strictly from context):"""
 
         try:
-            model = os.getenv("LLM_MODEL", "gpt-4")
+            model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
             agent_logger.info(f"{self.name}: 🤖 Invoking LLM - Model: {model}, Temperature: 0.3")
 
-            response = self.client.chat.completions.create(
+            response = self.client.models.generate_content(
                 model=model,
-                messages=[
-                    {"role": "system", "content": "You are an expert editor who creates clear, comprehensive, and well-structured answers."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are an expert editor who creates clear, comprehensive, and well-structured answers.",
+                    temperature=0.3,
+                ),
             )
 
-            final_answer = response.choices[0].message.content
+            final_answer = response.text
 
             # Log token usage
-            usage = response.usage
+            usage = response.usage_metadata
             agent_logger.info(
                 f"{self.name}: ✅ LLM Response received | "
-                f"Tokens: {usage.prompt_tokens} input + {usage.completion_tokens} output = {usage.total_tokens} total | "
+                f"Tokens: {usage.prompt_token_count} input + {usage.candidates_token_count} output = {usage.total_token_count} total | "
                 f"Final answer length: {len(final_answer)} chars"
             )
 

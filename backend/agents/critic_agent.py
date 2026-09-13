@@ -2,14 +2,15 @@
 Critic Agent: Evaluates the summary and identifies missing information or areas for improvement
 """
 import os
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from utils.logger import agent_logger
 
 
 class CriticAgent:
     def __init__(self):
         self.name = "Critic Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def critique(self, query: str, summary: str, chunks: list[str]):
@@ -69,25 +70,25 @@ GAPS: [Hallucinations OR missing context info]
 SUGGESTIONS: [Stick to context OR add missing context info]"""
 
         try:
-            model = os.getenv("LLM_MODEL", "gpt-4")
+            model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
             agent_logger.info(f"{self.name}: 🤖 Invoking LLM - Model: {model}, Temperature: 0.4")
 
-            response = self.client.chat.completions.create(
+            response = self.client.models.generate_content(
                 model=model,
-                messages=[
-                    {"role": "system", "content": "You are a critical evaluator focused on ensuring comprehensive and accurate answers."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.4
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a critical evaluator focused on ensuring comprehensive and accurate answers.",
+                    temperature=0.4,
+                ),
             )
 
-            critique = response.choices[0].message.content
+            critique = response.text
 
             # Log token usage
-            usage = response.usage
+            usage = response.usage_metadata
             agent_logger.info(
                 f"{self.name}: ✅ LLM Response received | "
-                f"Tokens: {usage.prompt_tokens} input + {usage.completion_tokens} output = {usage.total_tokens} total"
+                f"Tokens: {usage.prompt_token_count} input + {usage.candidates_token_count} output = {usage.total_token_count} total"
             )
 
             # Parse suggestions (basic extraction)

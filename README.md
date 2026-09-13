@@ -24,7 +24,7 @@ Deploy the entire stack for free with one click:
   - **Editor Agent →** Refines and formats final responses
 - **📚 Multi-Document Support** → Upload and query multiple PDFs, DOCX, or TXT files
 - **💬 Conversation Memory** → SQLite-backed memory for contextual, follow-up queries
-- **🧩 Chunking & Embeddings** → Splits documents into chunks and embeds them using OpenAI models
+- **🧩 Chunking & Embeddings** → Splits documents into chunks and embeds them using Gemini models
 - **⚡ FAISS Vector Search** → High-speed semantic retrieval of embedded text chunks
 - **🔄 LangGraph Orchestration** → Structured multi-agent pipeline with conditional routing
 - **🎨 Modern UI** → Responsive frontend built with Next.js and TailwindCSS
@@ -74,7 +74,7 @@ AI-Research-Assistant/
 │   │
 │   ├── utils/                         # Utility Modules
 │   │   ├── document_parser.py        # Multi-format document parser
-│   │   ├── embeddings.py             # OpenAI embedding generation
+│   │   ├── embeddings.py             # Gemini embedding generation
 │   │   ├── logger.py                 # Logging configuration
 │   │   └── pdf_parser.py             # Legacy PDF parser
 │   │
@@ -133,7 +133,7 @@ AI-Research-Assistant/
 
 ### 🤖 AI 
 - **LangGraph**: Agent workflow orchestration
-- **OpenAI**: GPT-4o-mini and text-embedding-3-small models
+- **Gemini**: gemini-2.5-flash and text-embedding-004 models
 
 ---
 
@@ -141,7 +141,7 @@ AI-Research-Assistant/
 
 - Python 3.8+
 - Node.js 18+
-- OpenAI API Key
+- Gemini API Key
   
 ---
 
@@ -174,10 +174,10 @@ uvicorn main:app --reload --port 8000
 Create a `.env` file in the root directory:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
 VECTOR_DB_PATH=./backend/db/documents
-EMBEDDING_MODEL=text-embedding-3-small
-LLM_MODEL=gpt-4o-mini
+EMBEDDING_MODEL=text-embedding-004
+LLM_MODEL=gemini-2.5-flash
 BACKEND_PORT=8000
 ```
 
@@ -244,7 +244,7 @@ Supported formats:
 
 Documents are:
 1. Chunked into ~500 character segments
-2. Embedded using OpenAI's text-embedding-3-small
+2. Embedded using Gemini's text-embedding-004
 3. Stored in FAISS vector indexes
 4. Retrieved via semantic similarity search
 
