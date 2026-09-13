@@ -30,7 +30,7 @@ export default function MessageContent({
           <button
             key={i}
             onClick={() => onCiteClick(citation)}
-            className="inline-flex items-center justify-center mx-0.5 px-1.5 h-4 align-super text-[10px] font-bold rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+            className="inline-flex items-center justify-center mx-0.5 px-1.5 h-4 align-super text-[10px] font-bold rounded bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
             title={`Jump to source: ${citation.filename}`}
           >
             {match[1]}
