@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List
 
 
 class DocumentOut(BaseModel):
@@ -21,11 +21,19 @@ class ChatSessionCreate(BaseModel):
     title: Optional[str] = None
 
 
+class CitationOut(BaseModel):
+    index: int
+    chunk_id: str
+    filename: str
+    content: str
+    similarity: float
+
+
 class MessageOut(BaseModel):
     id: str
     role: str
     content: str
-    sources: List[str]
+    sources: List[CitationOut]
     created_at: str
 
 
@@ -33,10 +41,3 @@ class AskRequest(BaseModel):
     query: str
     top_k: int = 5
     document_id: Optional[str] = None
-
-
-class AskResponse(BaseModel):
-    answer: str
-    sources: List[str]
-    workflow_log: List[str]
-    metadata: Dict

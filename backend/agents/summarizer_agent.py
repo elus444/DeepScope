@@ -4,6 +4,7 @@ Summarizer Agent: Summarizes retrieved chunks into a coherent answer
 import os
 from google import genai
 from google.genai import types
+from utils.citations import build_numbered_context
 from utils.logger import agent_logger
 
 
@@ -13,22 +14,22 @@ class SummarizerAgent:
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
-    def summarize(self, query: str, chunks: list[str], conversation_context: str = ""):
+    def summarize(self, query: str, citations: list[dict], conversation_context: str = ""):
         """
-        Summarize retrieved chunks into a coherent answer
+        Summarize retrieved chunks into a coherent, cited answer
 
         Args:
             query: Original user question
-            chunks: List of relevant text chunks retrieved via pgvector similarity search
+            citations: Numbered {index, filename, content, ...} chunks from the Research Agent
             conversation_context: Previous conversation history for follow-up queries
 
         Returns:
             dict with summary and metadata
         """
         agent_logger.info(f"{self.name}: Starting summarization for query='{query}'")
-        agent_logger.debug(f"{self.name}: Processing {len(chunks)} chunks")
+        agent_logger.debug(f"{self.name}: Processing {len(citations)} chunks")
 
-        if not chunks:
+        if not citations:
             agent_logger.warning(f"{self.name}: No chunks provided for summarization")
             return {
                 "status": "error",
@@ -36,8 +37,10 @@ class SummarizerAgent:
                 "summary": ""
             }
 
-        # Combine chunks into context
-        context = "\n\n---\n\n".join(chunks)
+        # Number each chunk so the model can cite it -- e.g. "[2]" --
+        # and the frontend can later resolve that number back to the
+        # exact source card.
+        context = build_numbered_context(citations)
 
         # Add conversation context if available
         conversation_prefix = ""
@@ -59,6 +62,10 @@ CRITICAL RULES - READ CAREFULLY:
 3. DO NOT make assumptions or inferences beyond what's written
 4. If the exact answer is in the context, use it word-for-word or paraphrase it closely
 5. If information is NOT in the context, say "This information is not found in the document."
+6. Cite the bracket number of every source a claim comes from, right after
+   the claim -- e.g. "The deadline is March 1st [2]." Use multiple
+   numbers if a sentence draws on more than one source, e.g. "[1][3]".
+   Never invent a number that isn't in the context above.
 
 RESPONSE LENGTH:
 SIMPLE QUESTIONS (what is, how much, when, who):
@@ -100,7 +107,7 @@ Your answer (strictly from context only):"""
             return {
                 "status": "success",
                 "summary": summary,
-                "num_chunks_used": len(chunks)
+                "num_chunks_used": len(citations)
             }
 
         except Exception as e:

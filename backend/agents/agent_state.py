@@ -20,8 +20,8 @@ class AgentState(TypedDict):
     supabase: Any                       # Client authenticated as the calling user (supabase.Client)
 
     # Research Agent Output
-    chunks: List[str]                   # Retrieved text chunks
-    sources: List[str]                  # Source documents for chunks
+    chunks: List[str]                   # Retrieved text chunks (plain text, for prompts)
+    citations: List[Any]                # Numbered {index, chunk_id, filename, content, similarity}
     num_chunks_found: int                # Number of chunks retrieved
 
     # Summarizer Agent Output

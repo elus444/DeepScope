@@ -28,7 +28,7 @@ class ResearchAgent:
             document_id: Optional single document to restrict the search to
 
         Returns:
-            dict with retrieved chunks and metadata
+            dict with retrieved chunks and citation metadata
         """
         agent_logger.info(
             f"{self.name}: Starting search for query='{query}', top_k={top_k}, document_id={document_id}"
@@ -53,18 +53,34 @@ class ResearchAgent:
                 "status": "error",
                 "message": "No documents available",
                 "chunks": [],
-                "sources": [],
+                "citations": [],
             }
 
-        chunks = [row["content"] for row in rows]
-        sources = [row["filename"] for row in rows]
+        # `citations` is the numbered, structured form the rest of the
+        # pipeline cites against ([1], [2], ...) and the frontend later
+        # renders as clickable source cards -- `chunks` stays a plain
+        # list of strings since that's all the summarizer/critic/editor
+        # prompts need.
+        citations = [
+            {
+                "index": i + 1,
+                "chunk_id": row["chunk_id"],
+                "filename": row["filename"],
+                "content": row["content"],
+                "similarity": row["similarity"],
+            }
+            for i, row in enumerate(rows)
+        ]
+        chunks = [c["content"] for c in citations]
 
-        agent_logger.info(f"{self.name}: Retrieved {len(chunks)} chunks from {len(set(sources))} source(s)")
+        agent_logger.info(
+            f"{self.name}: Retrieved {len(chunks)} chunks from {len(set(c['filename'] for c in citations))} source(s)"
+        )
 
         return {
             "status": "success",
             "query": query,
             "chunks": chunks,
-            "sources": sources,
+            "citations": citations,
             "num_results": len(chunks),
         }

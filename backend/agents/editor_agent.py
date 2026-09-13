@@ -4,6 +4,7 @@ Editor Agent: Refines and polishes the final answer based on critic feedback
 import os
 from google import genai
 from google.genai import types
+from utils.citations import build_numbered_context
 from utils.logger import agent_logger
 
 
@@ -13,7 +14,7 @@ class EditorAgent:
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
-    def edit(self, query: str, summary: str, critique: str, chunks: list[str]):
+    def edit(self, query: str, summary: str, critique: str, citations: list[dict]):
         """
         Polish the summary based on critic feedback
 
@@ -21,7 +22,9 @@ class EditorAgent:
             query: Original user question
             summary: Initial summary from SummarizerAgent
             critique: Feedback from CriticAgent
-            chunks: Original retrieved chunks for additional context
+            citations: Numbered {index, filename, content, ...} chunks -- the same
+                numbering the SummarizerAgent cited against, so [2] means the
+                same source in both the draft and the polished answer
 
         Returns:
             dict with final polished answer
@@ -38,7 +41,7 @@ class EditorAgent:
             }
 
         # Provide additional context for refinement
-        context = "\n\n---\n\n".join(chunks)
+        context = build_numbered_context(citations)
 
         prompt = f"""You are an editor. Refine the answer to ensure it uses ONLY information from the document context.
 
@@ -59,6 +62,11 @@ CRITICAL RULES:
 3. If feedback mentions missing info that IS in context, ADD it
 4. DO NOT use general knowledge or external information
 5. When in doubt, quote directly from the context
+6. Cite the bracket number of every source a claim comes from, right after
+   the claim -- e.g. "The deadline is March 1st [2]." Use multiple
+   numbers if a sentence draws on more than one source, e.g. "[1][3]".
+   Never invent a number that isn't in the context above, and never
+   drop a citation that was already correct in the initial answer.
 
 FOR SIMPLE QUESTIONS:
 - Keep answer SHORT (1-2 sentences)
@@ -70,9 +78,9 @@ FOR COMPLEX QUESTIONS:
 - Do not add external examples or explanations
 - Organize clearly, but content must come from context only
 
-If the context doesn't contain enough information to fully answer the question, state: "Based on the document: [answer with available info]. Additional details not found in document."
+If the context doesn't contain enough information to fully answer the question, state: "Based on the document: <answer with available info>. Additional details not found in document."
 
-Provide the corrected final answer (strictly from context):"""
+Provide the corrected final answer (strictly from context, with citations):"""
 
         try:
             model = os.getenv("LLM_MODEL", "gemini-3.6-flash")

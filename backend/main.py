@@ -1,15 +1,18 @@
+import json
 import os
+import re
 import tempfile
+import time
 
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from supabase import Client
 
 from agents.orchestrator import Orchestrator
 from models.schemas import (
     AskRequest,
-    AskResponse,
     ChatSessionCreate,
     ChatSessionOut,
     DocumentOut,
@@ -186,22 +189,37 @@ def get_messages(session_id: str, supabase: Client = Depends(get_supabase)):
     return result.data
 
 
-@app.post("/chat/sessions/{session_id}/messages", response_model=AskResponse)
-def ask(
-    session_id: str,
-    req: AskRequest,
-    supabase: Client = Depends(get_supabase),
-    user_id: str = Depends(get_user_id),
-):
-    """
-    Ask a question inside a chat session: runs the Research -> Summarize
-    -> Critique -> Edit pipeline scoped to the caller's own documents,
-    then persists both the user's question and the assistant's answer.
-    """
-    api_logger.info(f"[session={session_id}] Query: '{req.query}' (document_id={req.document_id})")
+# Pipeline stages in the order they run, with the state flag that means
+# "this stage just finished" and copy for the frontend's live pipeline
+# view. `has_gaps` decides which of the last two actually runs -- the
+# generator below picks the right one once it knows.
+PIPELINE_STAGES = [
+    ("research", "research_complete"),
+    ("summarize", "summary_complete"),
+    ("critique", "critique_complete"),
+    # Whether this actually edits or just passes the draft through isn't
+    # known until it finishes (that's the critic's call) -- "finalize"
+    # stays the stage name for both the start and done events; which one
+    # happened is in the done event's `detail` instead.
+    ("finalize", "editor_complete"),
+]
 
-    # Build short conversation context from prior turns in this session,
-    # so follow-up questions ("what about...") resolve correctly.
+
+def _sse(event: dict) -> str:
+    return f"data: {json.dumps(event)}\n\n"
+
+
+def _stream_ask(session_id: str, req: AskRequest, supabase: Client):
+    """
+    Runs the multi-agent pipeline via Orchestrator.stream_query and
+    turns it into Server-Sent Events: a "stage" event as each agent
+    starts and finishes (drives the frontend's live pipeline view), a
+    "citations" event as soon as retrieval completes, the final answer
+    revealed word-by-word once the whole pipeline has vetted it (see
+    the docstring below on why that's word-reveal rather than raw
+    token streaming), and a closing "done" event once everything is
+    persisted.
+    """
     history = (
         supabase.table("chat_messages")
         .select("role, content")
@@ -221,31 +239,108 @@ def ask(
         {"session_id": session_id, "role": "user", "content": req.query, "sources": []}
     ).execute()
 
-    result = orchestrator.process_query(
-        query=req.query,
-        supabase=supabase,
-        top_k=req.top_k,
-        document_id=req.document_id,
-        conversation_context=conversation_context,
+    yield _sse({"type": "stage", "stage": "research", "status": "start"})
+
+    last_state = None
+    stage_idx = 0
+    try:
+        for state in orchestrator.stream_query(
+            query=req.query,
+            supabase=supabase,
+            top_k=req.top_k,
+            document_id=req.document_id,
+            conversation_context=conversation_context,
+        ):
+            last_state = state
+
+            if state.get("status") == "error":
+                yield _sse({"type": "error", "message": state.get("error_message", "Something went wrong")})
+                return
+
+            stage_name, flag = PIPELINE_STAGES[stage_idx]
+            if not state.get(flag):
+                continue  # this yielded state is mid-flight for the current stage
+
+            if stage_name == "research":
+                detail = f"Found {state.get('num_chunks_found', 0)} relevant chunk(s)"
+            elif stage_name == "critique":
+                detail = "Found gaps to fix" if state.get("has_gaps") else "No gaps found"
+            elif stage_name == "finalize":
+                detail = "Answer refined" if state.get("editing_applied") else "Initial answer was already solid"
+            else:
+                detail = "Done"
+
+            yield _sse({"type": "stage", "stage": stage_name, "status": "done", "detail": detail})
+
+            if stage_name == "research":
+                yield _sse({"type": "citations", "citations": state.get("citations", [])})
+
+            stage_idx += 1
+            if stage_idx < len(PIPELINE_STAGES):
+                next_stage = PIPELINE_STAGES[stage_idx][0]
+                yield _sse({"type": "stage", "stage": next_stage, "status": "start"})
+    except Exception as e:
+        api_logger.error(f"[session={session_id}] Pipeline error: {str(e)}", exc_info=True)
+        yield _sse({"type": "error", "message": f"Error in agent pipeline: {str(e)}"})
+        return
+
+    result = orchestrator.format_result(last_state)
+    if result["status"] == "error":
+        yield _sse({"type": "error", "message": result["answer"]})
+        return
+
+    # The answer is only revealed once Critic + (maybe) Editor have
+    # already vetted it -- streaming the Summarizer's raw first draft
+    # token-by-token would show text that then gets silently corrected
+    # or replaced, which reads as broken, not impressive. What's
+    # genuinely live above is the *pipeline itself*; what's streamed
+    # here is a typewriter reveal of the answer the pipeline actually
+    # settled on.
+    for piece in re.findall(r"\S+\s*", result["answer"]):
+        yield _sse({"type": "answer_chunk", "text": piece})
+        time.sleep(0.015)
+
+    saved = (
+        supabase.table("chat_messages")
+        .insert(
+            {
+                "session_id": session_id,
+                "role": "assistant",
+                "content": result["answer"],
+                "sources": result.get("citations", []),
+            }
+        )
+        .execute()
     )
 
-    if result["status"] == "error":
-        raise HTTPException(status_code=400, detail=result["answer"])
-
-    supabase.table("chat_messages").insert(
+    yield _sse(
         {
-            "session_id": session_id,
-            "role": "assistant",
-            "content": result["answer"],
-            "sources": result.get("sources", []),
+            "type": "done",
+            "message_id": saved.data[0]["id"],
+            "citations": result.get("citations", []),
+            "metadata": result.get("metadata", {}),
         }
-    ).execute()
+    )
 
-    return AskResponse(
-        answer=result["answer"],
-        sources=result.get("sources", []),
-        workflow_log=result.get("workflow_log", []),
-        metadata=result.get("metadata", {}),
+
+@app.post("/chat/sessions/{session_id}/messages")
+def ask(
+    session_id: str,
+    req: AskRequest,
+    supabase: Client = Depends(get_supabase),
+    user_id: str = Depends(get_user_id),
+):
+    """
+    Ask a question inside a chat session: streams the Research ->
+    Summarize -> Critique -> Edit pipeline live as Server-Sent Events,
+    then persists both the user's question and the assistant's answer.
+    """
+    api_logger.info(f"[session={session_id}] Query: '{req.query}' (document_id={req.document_id})")
+
+    return StreamingResponse(
+        _stream_ask(session_id, req, supabase),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

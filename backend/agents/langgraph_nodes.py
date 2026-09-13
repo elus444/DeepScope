@@ -46,7 +46,7 @@ def research_node(state: AgentState) -> AgentState:
             "error_message": result["message"],
             "workflow_log": workflow_log,
             "chunks": [],
-            "sources": [],
+            "citations": [],
             "num_chunks_found": 0,
             "research_complete": False,
         }
@@ -56,7 +56,7 @@ def research_node(state: AgentState) -> AgentState:
     return {
         **state,
         "chunks": result["chunks"],
-        "sources": result["sources"],
+        "citations": result["citations"],
         "num_chunks_found": len(result["chunks"]),
         "workflow_log": workflow_log,
         "research_complete": True,
@@ -80,7 +80,7 @@ def summarizer_node(state: AgentState) -> AgentState:
     # Execute summarization
     result = summarizer_agent.summarize(
         query=state["query"],
-        chunks=state["chunks"],
+        citations=state["citations"],
         conversation_context=state.get("conversation_context", "")
     )
 
@@ -122,7 +122,7 @@ def critic_node(state: AgentState) -> AgentState:
     result = critic_agent.critique(
         query=state["query"],
         summary=state["initial_summary"],
-        chunks=state["chunks"]
+        citations=state["citations"]
     )
 
     if result["status"] == "error":
@@ -170,7 +170,7 @@ def editor_node(state: AgentState) -> AgentState:
         query=state["query"],
         summary=state["initial_summary"],
         critique=state["critique"],
-        chunks=state["chunks"]
+        citations=state["citations"]
     )
 
     workflow_log.append("[4/4] Complete - Final answer polished and ready")
