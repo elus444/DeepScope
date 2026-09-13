@@ -36,6 +36,7 @@ export default function Sidebar({
   activeSessionId,
   onNewChat,
   onOpenSession,
+  onDeleteSession,
   onOpenDocuments,
   documentCount,
 }: {
@@ -45,6 +46,7 @@ export default function Sidebar({
   activeSessionId: string;
   onNewChat: () => void;
   onOpenSession: (session: ChatSessionOut) => void;
+  onDeleteSession: (session: ChatSessionOut) => void;
   onOpenDocuments: () => void;
   documentCount: number;
 }) {
@@ -165,20 +167,35 @@ export default function Sidebar({
               </p>
               <div className="space-y-0.5">
                 {group.items.map((s) => (
-                  <motion.button
+                  <motion.div
                     key={s.id}
                     layout
-                    onClick={() => onOpenSession(s)}
-                    whileHover={{ x: 2 }}
-                    className={`w-full text-left px-2.5 py-2 rounded-lg text-sm truncate transition-colors ${
-                      s.id === activeSessionId
-                        ? "bg-violet-100 text-violet-800 font-medium"
-                        : "text-slate-600 hover:bg-violet-50"
+                    className={`group/item relative flex items-center rounded-lg transition-colors ${
+                      s.id === activeSessionId ? "bg-violet-100" : "hover:bg-violet-50"
                     }`}
-                    title={s.title}
                   >
-                    {s.title}
-                  </motion.button>
+                    <button
+                      onClick={() => onOpenSession(s)}
+                      className={`flex-1 min-w-0 text-left pl-2.5 pr-7 py-2 text-sm truncate ${
+                        s.id === activeSessionId ? "text-violet-800 font-medium" : "text-slate-600"
+                      }`}
+                      title={s.title}
+                    >
+                      {s.title}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSession(s);
+                      }}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-slate-400 opacity-0 group-hover/item:opacity-100 hover:bg-violet-200 hover:text-red-500 transition-all"
+                      title="Delete conversation"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </motion.div>
                 ))}
               </div>
             </div>
