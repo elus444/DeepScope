@@ -7,9 +7,9 @@ python-multipart
 google-genai
 langgraph
 
-# Vector Search & Math
-faiss-cpu
-numpy
+# Database, Auth & Vector Search (Postgres/pgvector via Supabase)
+supabase
+pyjwt
 
 # Document Parsers
 pdfplumber

@@ -1,7 +1,27 @@
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 import ChatBox from "../components/ChatBox";
 import Head from "next/head";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Home() {
+  const { session, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !session) {
+      router.replace("/login");
+    }
+  }, [loading, session, router]);
+
+  if (loading || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>

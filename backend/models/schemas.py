@@ -1,18 +1,42 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 
+
+class DocumentOut(BaseModel):
+    id: str
+    filename: str
+    file_type: str
+    character_count: int
+    chunk_count: int
+    created_at: str
+
+
+class ChatSessionOut(BaseModel):
+    id: str
+    title: str
+    created_at: str
+
+
+class ChatSessionCreate(BaseModel):
+    title: Optional[str] = None
+
+
+class MessageOut(BaseModel):
+    id: str
+    role: str
+    content: str
+    sources: List[str]
+    created_at: str
+
+
 class AskRequest(BaseModel):
     query: str
     top_k: int = 5
-    source: Optional[str] = None  # Filter by document source (legacy)
-    doc_ids: Optional[List[str]] = None  # Phase 5: List of document IDs to search
-    session_id: Optional[str] = None  # Session ID for conversation memory
+    document_id: Optional[str] = None
 
-class SessionCreateResponse(BaseModel):
-    session_id: str
-    created_at: str
 
-class SessionHistoryResponse(BaseModel):
-    session_id: str
-    messages: List[Dict]
+class AskResponse(BaseModel):
+    answer: str
+    sources: List[str]
+    workflow_log: List[str]
     metadata: Dict
