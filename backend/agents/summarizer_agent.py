@@ -2,14 +2,15 @@
 Summarizer Agent: Summarizes retrieved chunks into a coherent answer
 """
 import os
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from utils.logger import agent_logger
 
 
 class SummarizerAgent:
     def __init__(self):
         self.name = "Summarizer Agent"
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
         agent_logger.info(f"{self.name} initialized")
 
     def summarize(self, query: str, chunks: list[str], conversation_context: str = ""):
@@ -74,25 +75,25 @@ WARNING: If you add information not in the context, the answer is WRONG.
 Your answer (strictly from context only):"""
 
         try:
-            model = os.getenv("LLM_MODEL", "gpt-4")
+            model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
             agent_logger.info(f"{self.name}: 🤖 Invoking LLM - Model: {model}, Temperature: 0.2")
 
-            response = self.client.chat.completions.create(
+            response = self.client.models.generate_content(
                 model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful research and document extraction assistant. You must provide accurate, well-structured answers based only on the context provided by the user. You MUST answer using ONLY the information in the context and never use your general knowledge. If the answer is not in the context, respond with: 'Information not found in document."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2  # Lower temperature for more focused summaries
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a helpful research and document extraction assistant. You must provide accurate, well-structured answers based only on the context provided by the user. You MUST answer using ONLY the information in the context and never use your general knowledge. If the answer is not in the context, respond with: 'Information not found in document.",
+                    temperature=0.2,  # Lower temperature for more focused summaries
+                ),
             )
 
-            summary = response.choices[0].message.content
+            summary = response.text
 
             # Log token usage
-            usage = response.usage
+            usage = response.usage_metadata
             agent_logger.info(
                 f"{self.name}: ✅ LLM Response received | "
-                f"Tokens: {usage.prompt_tokens} input + {usage.completion_tokens} output = {usage.total_tokens} total | "
+                f"Tokens: {usage.prompt_token_count} input + {usage.candidates_token_count} output = {usage.total_token_count} total | "
                 f"Response length: {len(summary)} chars"
             )
 

@@ -1,6 +1,6 @@
 import os
 import uvicorn
-from config import OPENAI_API_KEY
+from config import GEMINI_API_KEY
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from utils.document_parser import extract_text_from_file, chunk_text, SUPPORTED_EXTENSIONS
 from utils.embeddings import get_embedding
@@ -8,7 +8,7 @@ from db.faiss_store import save_faiss_index, load_faiss_index, get_documents
 from db.multi_doc_store import multi_doc_store
 from db.sqlite_memory import conversation_memory
 from models.schemas import AskRequest, SessionCreateResponse, SessionHistoryResponse
-from openai import OpenAI
+from google import genai
 import faiss
 import numpy as np
 import tempfile
@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "dummy-key-for-startup")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY") or "dummy-key-for-startup")
 orchestrator = Orchestrator()
 
 @app.get("/health")
@@ -286,23 +286,23 @@ async def ask(req: AskRequest):
     context = "\n\n".join(retrieved)
 
     prompt = f"Answer using context below:\n{context}\n\nQuestion: {req.query}"
-    model = os.getenv("LLM_MODEL", "gpt-4")
+    model = os.getenv("LLM_MODEL", "gemini-2.5-flash")
     api_logger.info(f"🤖 Invoking LLM - Model: {model}")
 
-    response = client.chat.completions.create(
+    response = client.models.generate_content(
         model=model,
-        messages=[{"role": "user", "content": prompt}]
+        contents=prompt,
     )
 
     # Log token usage
-    usage = response.usage
+    usage = response.usage_metadata
     api_logger.info(
         f"✅ LLM Response received | "
-        f"Tokens: {usage.prompt_tokens} input + {usage.completion_tokens} output = {usage.total_tokens} total"
+        f"Tokens: {usage.prompt_token_count} input + {usage.candidates_token_count} output = {usage.total_token_count} total"
     )
 
     return {
-        "answer": response.choices[0].message.content,
+        "answer": response.text,
         "sources": sources[:req.top_k]
     }
 

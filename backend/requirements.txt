@@ -4,7 +4,7 @@ uvicorn[standard]
 python-multipart
 
 # AI & LLM
-openai
+google-genai
 langgraph
 
 # Vector Search & Math

@@ -6,13 +6,13 @@ services:
     dockerContext: ./backend
     plan: free
     envVars:
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: VECTOR_DB_PATH
         value: ./db/documents
       - key: EMBEDDING_MODEL
-        value: text-embedding-3-small
+        value: text-embedding-004
       - key: LLM_MODEL
-        value: gpt-4o-mini
+        value: gemini-2.5-flash
       - key: FRONTEND_URL
         sync: false
