@@ -1,7 +1,7 @@
 """
 LangGraph State Definition for Multi-Agent Workflow
 """
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List, Optional, Any
 
 
 class AgentState(TypedDict):
@@ -15,16 +15,14 @@ class AgentState(TypedDict):
     # Input
     query: str                          # User's question
     top_k: int                          # Number of chunks to retrieve
-    source: Optional[str]               # Document source filter (legacy)
-    doc_ids: Optional[List[str]]        # Phase 5: Document IDs to search
-    use_multi_doc: bool                 # Phase 5: Use multi-doc store
+    document_id: Optional[str]          # Restrict search to one document (None = all of the user's docs)
     conversation_context: str           # Previous conversation history
+    supabase: Any                       # Client authenticated as the calling user (supabase.Client)
 
     # Research Agent Output
     chunks: List[str]                   # Retrieved text chunks
     sources: List[str]                  # Source documents for chunks
-    num_chunks_found: int               # Number of chunks retrieved
-    searched_docs: List[str]            # Phase 5: Documents that were searched
+    num_chunks_found: int                # Number of chunks retrieved
 
     # Summarizer Agent Output
     initial_summary: str                # First draft answer

@@ -10,7 +10,9 @@ from agents.critic_agent import CriticAgent
 from agents.editor_agent import EditorAgent
 
 
-# Initialize agents once
+# Initialize agents once. None of these hold per-user state -- the
+# caller's identity flows through as data (state["supabase"]), not
+# through which agent instance is used.
 research_agent = ResearchAgent()
 summarizer_agent = SummarizerAgent()
 critic_agent = CriticAgent()
@@ -19,7 +21,7 @@ editor_agent = EditorAgent()
 
 def research_node(state: AgentState) -> AgentState:
     """
-    Research Agent Node: Retrieve relevant chunks from FAISS
+    Research Agent Node: Retrieve relevant chunks from Postgres/pgvector
 
     Args:
         state: Current workflow state
@@ -27,82 +29,39 @@ def research_node(state: AgentState) -> AgentState:
     Returns:
         Updated state with retrieved chunks
     """
-    # Log progress
     workflow_log = state.get("workflow_log", [])
+    workflow_log.append("[1/4] Research Agent: Searching your documents...")
 
-    # Check if using multi-doc mode (Phase 5)
-    use_multi_doc = state.get("use_multi_doc", False)
+    result = research_agent.search(
+        query=state["query"],
+        supabase=state["supabase"],
+        top_k=state.get("top_k", 5),
+        document_id=state.get("document_id"),
+    )
 
-    if use_multi_doc:
-        workflow_log.append("[1/4] Research Agent: Searching multi-document store...")
-
-        # Execute multi-doc research
-        result = research_agent.search_multi_doc(
-            query=state["query"],
-            doc_ids=state.get("doc_ids"),
-            top_k=state.get("top_k", 5)
-        )
-
-        if result["status"] == "error":
-            return {
-                **state,
-                "status": "error",
-                "error_message": result["message"],
-                "workflow_log": workflow_log,
-                "chunks": [],
-                "sources": [],
-                "searched_docs": [],
-                "num_chunks_found": 0,
-                "research_complete": False
-            }
-
-        workflow_log.append(
-            f"[1/4] Complete - Found {len(result['chunks'])} chunks from {len(result.get('searched_docs', []))} document(s)"
-        )
-
+    if result["status"] == "error":
         return {
             **state,
-            "chunks": result["chunks"],
-            "sources": result["sources"],
-            "searched_docs": result.get("searched_docs", []),
-            "num_chunks_found": len(result["chunks"]),
+            "status": "error",
+            "error_message": result["message"],
             "workflow_log": workflow_log,
-            "research_complete": True,
-            "status": "research_complete"
+            "chunks": [],
+            "sources": [],
+            "num_chunks_found": 0,
+            "research_complete": False,
         }
-    else:
-        # Legacy mode: single FAISS index
-        workflow_log.append("[1/4] Research Agent: Searching FAISS for relevant information...")
 
-        result = research_agent.search(
-            query=state["query"],
-            top_k=state.get("top_k", 5),
-            source=state.get("source")
-        )
+    workflow_log.append(f"[1/4] Complete - Found {len(result['chunks'])} relevant chunks")
 
-        if result["status"] == "error":
-            return {
-                **state,
-                "status": "error",
-                "error_message": result["message"],
-                "workflow_log": workflow_log,
-                "chunks": [],
-                "sources": [],
-                "num_chunks_found": 0,
-                "research_complete": False
-            }
-
-        workflow_log.append(f"[1/4] Complete - Found {len(result['chunks'])} relevant chunks")
-
-        return {
-            **state,
-            "chunks": result["chunks"],
-            "sources": result["sources"],
-            "num_chunks_found": len(result["chunks"]),
-            "workflow_log": workflow_log,
-            "research_complete": True,
-            "status": "research_complete"
-        }
+    return {
+        **state,
+        "chunks": result["chunks"],
+        "sources": result["sources"],
+        "num_chunks_found": len(result["chunks"]),
+        "workflow_log": workflow_log,
+        "research_complete": True,
+        "status": "research_complete",
+    }
 
 
 def summarizer_node(state: AgentState) -> AgentState:
