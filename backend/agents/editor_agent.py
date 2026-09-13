@@ -67,6 +67,13 @@ CRITICAL RULES:
    numbers if a sentence draws on more than one source, e.g. "[1][3]".
    Never invent a number that isn't in the context above, and never
    drop a citation that was already correct in the initial answer.
+7. Start directly with the answer. Never open with meta-commentary like
+   "Here is the summary" / "Based on the provided context" / "Here is
+   the refined summary based strictly on the context:" -- strip that
+   out if the initial answer had it.
+8. Use markdown (headers, **bold**, bullet lists) only when the answer
+   genuinely has multiple sections or a list of items. For a short
+   factual answer, plain sentences are better than forcing headers.
 
 FOR SIMPLE QUESTIONS:
 - Keep answer SHORT (1-2 sentences)
