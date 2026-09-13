@@ -19,7 +19,7 @@ class SummarizerAgent:
 
         Args:
             query: Original user question
-            chunks: List of relevant text chunks from FAISS
+            chunks: List of relevant text chunks retrieved via pgvector similarity search
             conversation_context: Previous conversation history for follow-up queries
 
         Returns:
