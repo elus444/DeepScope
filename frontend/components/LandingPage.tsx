@@ -277,7 +277,7 @@ export default function LandingPage() {
       </section>
 
       {/* Tech marquee */}
-      <section className="py-10 border-y border-violet-100/70 bg-white/40">
+      <section className="py-10">
         <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-5">
           Built on a real production stack
         </p>
@@ -309,47 +309,50 @@ export default function LandingPage() {
           </p>
         </motion.div>
 
+        {/* Lead feature -- its own full-width row so its taller content
+            (description + mini flow diagram) never fights a shorter card
+            for row height. */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          whileHover={{ y: -4, boxShadow: "0 20px 44px rgba(124,58,237,0.18)" }}
+          className="glass-solid rounded-2xl p-7 transition-shadow mb-5"
+        >
+          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {FEATURES[0].icon}
+            </svg>
+          </div>
+          <h3 className="font-semibold text-lg text-slate-800 mb-2">{FEATURES[0].title}</h3>
+          <p className="text-sm text-slate-500 leading-relaxed mb-6 max-w-md">{FEATURES[0].desc}</p>
+
+          {/* mini flow visual */}
+          <div className="flex items-center flex-wrap gap-2">
+            {["Research", "Summarize", "Critique", "Finalize"].map((s, i, arr) => (
+              <div key={s} className="flex items-center gap-2">
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.35 }}
+                  className="chip !bg-white"
+                >
+                  {s}
+                </motion.span>
+                {i < arr.length - 1 && (
+                  <svg className="w-3.5 h-3.5 text-violet-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Remaining three -- one even row, equal size */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {/* Big feature */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            whileHover={{ y: -4, boxShadow: "0 20px 44px rgba(124,58,237,0.18)" }}
-            className="sm:col-span-2 glass-solid rounded-2xl p-7 transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {FEATURES[0].icon}
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg text-slate-800 mb-2">{FEATURES[0].title}</h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-6 max-w-md">{FEATURES[0].desc}</p>
-
-            {/* mini flow visual */}
-            <div className="flex items-center flex-wrap gap-2">
-              {["Research", "Summarize", "Critique", "Finalize"].map((s, i, arr) => (
-                <div key={s} className="flex items-center gap-2">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1, duration: 0.35 }}
-                    className="chip !bg-white"
-                  >
-                    {s}
-                  </motion.span>
-                  {i < arr.length - 1 && (
-                    <svg className="w-3.5 h-3.5 text-violet-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
           {FEATURES.slice(1).map((f, i) => (
             <motion.div
               key={f.title}
