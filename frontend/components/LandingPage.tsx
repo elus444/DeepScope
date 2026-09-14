@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 const FEATURES = [
   {
     title: "Multi-agent pipeline",
-    desc: "A research agent retrieves, a summarizer drafts, a critic checks it against the source, and an editor polishes the final answer -- every step visible in real time.",
+    desc: "A research agent retrieves, a summarizer drafts, a critic checks it against the source, and an editor polishes the final answer — every step visible in real time.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
     ),
@@ -19,14 +19,14 @@ const FEATURES = [
   },
   {
     title: "Streamed answers",
-    desc: "Responses arrive token by token over a live SSE connection, with the pipeline stage lighting up as it works -- no spinner, no waiting in the dark.",
+    desc: "Responses arrive token by token over a live SSE connection, with the pipeline stage lighting up as it works — no spinner, no waiting in the dark.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
     ),
   },
   {
     title: "Private by design",
-    desc: "Row-level security is the only authorization boundary -- every query runs under your own access token, so your documents are never visible to anyone else, including the server.",
+    desc: "Row-level security is the only authorization boundary — every query runs under your own access token, so your documents are never visible to anyone else, including the server.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     ),
@@ -37,7 +37,7 @@ const STEPS = [
   {
     n: "01",
     title: "Upload your documents",
-    desc: "PDFs, Word docs, or plain text -- dropped in and chunked, embedded, and indexed with pgvector in seconds.",
+    desc: "PDFs, Word docs, or plain text — dropped in and chunked, embedded, and indexed with pgvector in seconds.",
   },
   {
     n: "02",
@@ -47,7 +47,7 @@ const STEPS = [
   {
     n: "03",
     title: "Get a cited, checked answer",
-    desc: "Watch the agent pipeline research, draft, critique, and refine -- then read an answer with sources you can verify.",
+    desc: "Watch the agent pipeline research, draft, critique, and refine — then read an answer with sources you can verify.",
   },
 ];
 
@@ -126,10 +126,10 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.22, duration: 0.6, ease: "easeOut" }}
-            className="mt-6 text-lg text-slate-500 max-w-xl mx-auto"
+            className="mt-6 text-lg sm:text-xl font-normal text-slate-600 leading-relaxed max-w-xl mx-auto"
           >
-            DeepScope reads your PDFs, docs, and notes, then researches, drafts, and fact-checks
-            its own answer before showing it to you -- with every claim traced back to its source.
+            DeepScope reads your PDFs, docs, and notes, then researches, drafts, and fact-checks its
+            own answer before showing it to you, with every claim traced back to its source.
           </motion.p>
 
           <motion.div
@@ -170,9 +170,9 @@ export default function LandingPage() {
           <div className="glass rounded-3xl p-3 shadow-[0_30px_80px_rgba(124,58,237,0.22)]">
             <div className="glass-solid rounded-2xl p-5 sm:p-6">
               <div className="flex items-center gap-1.5 mb-5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-300" />
-                <span className="w-2.5 h-2.5 rounded-full bg-green-300" />
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-300" />
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
               </div>
 
               {/* user bubble */}
