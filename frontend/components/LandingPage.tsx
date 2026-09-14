@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 
@@ -71,8 +71,6 @@ export default function LandingPage() {
   const previewY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const previewOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.4]);
 
-  const [spot, setSpot] = useState({ x: 50, y: 22 });
-
   return (
     <div className="relative overflow-x-hidden">
       {/* Scroll progress */}
@@ -121,35 +119,19 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section
-        ref={heroRef}
-        onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          setSpot({
-            x: ((e.clientX - rect.left) / rect.width) * 100,
-            y: ((e.clientY - rect.top) / rect.height) * 100,
-          });
-        }}
-        className="relative max-w-6xl mx-auto px-6 pt-20 pb-28 overflow-hidden"
-      >
-        {/* Dot grid, faded at the edges */}
+      <section ref={heroRef} className="relative max-w-6xl mx-auto px-6 pt-20 pb-28 overflow-hidden">
+        {/* Calm dot grid, faded at the edges -- the page's own ambient gradient
+            (see body in globals.css) already carries the color, so this stays
+            a single quiet texture rather than another layer of glow. */}
         <div
           className="absolute inset-0 -z-10"
           style={{
-            backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.18) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.16) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)",
-            maskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)",
+            WebkitMaskImage: "radial-gradient(ellipse 70% 55% at 50% 25%, black 30%, transparent 75%)",
+            maskImage: "radial-gradient(ellipse 70% 55% at 50% 25%, black 30%, transparent 75%)",
           }}
         />
-        {/* Mouse-reactive spotlight */}
-        <motion.div
-          animate={{ left: `${spot.x}%`, top: `${spot.y}%` }}
-          transition={{ type: "spring", stiffness: 40, damping: 22 }}
-          className="absolute -z-10 w-[560px] h-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/25 blur-[110px] pointer-events-none"
-        />
-        <GradientOrb className="absolute -top-20 -left-32 w-80 h-80 bg-violet-300/40 -z-10" />
-        <GradientOrb className="absolute top-10 -right-24 w-72 h-72 bg-fuchsia-300/30 -z-10" />
 
         <div className="relative text-center max-w-3xl mx-auto">
           <motion.div
@@ -172,7 +154,9 @@ export default function LandingPage() {
           >
             Ask your documents
             <br />
-            <span className="shimmer-text">anything, and trust the answer.</span>
+            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              anything, and trust the answer.
+            </span>
           </motion.h1>
 
           <motion.p
@@ -263,10 +247,10 @@ export default function LandingPage() {
                     className="chip"
                   >
                     <motion.span
-                      initial={{ scale: 0.6 }}
-                      whileInView={{ scale: [0.6, 1.3, 1] }}
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
-                      transition={{ delay: 0.6 + i * 0.12, duration: 0.4 }}
+                      transition={{ delay: 0.6 + i * 0.12, duration: 0.3 }}
                       className="w-1.5 h-1.5 rounded-full bg-violet-500"
                     />
                     {s}
@@ -431,15 +415,7 @@ export default function LandingPage() {
 
       {/* Dark contrast statement */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 py-28">
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
-            backgroundSize: "26px 26px",
-          }}
-        />
-        <GradientOrb className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/20" />
-        <GradientOrb className="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-500/20" />
+        <GradientOrb className="absolute top-0 left-1/2 -translate-x-1/2 w-[32rem] h-[32rem] bg-violet-500/15" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -466,8 +442,7 @@ export default function LandingPage() {
           transition={{ duration: 0.55, ease: "easeOut" }}
           className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 to-fuchsia-600 px-8 py-16 text-center shadow-[0_30px_70px_rgba(124,58,237,0.35)]"
         >
-          <GradientOrb className="absolute -top-16 -left-16 w-64 h-64 bg-white/10" />
-          <GradientOrb className="absolute -bottom-20 -right-10 w-72 h-72 bg-white/10" />
+          <GradientOrb className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-white/10" />
           <h2 className="relative text-3xl sm:text-4xl font-semibold text-white mb-4">
             See it work on your own documents
           </h2>
