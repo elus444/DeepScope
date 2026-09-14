@@ -39,6 +39,7 @@ export default function Sidebar({
   onDeleteSession,
   onOpenDocuments,
   documentCount,
+  onOpenAccount,
 }: {
   collapsed: boolean;
   onToggleCollapse: () => void;
@@ -49,6 +50,7 @@ export default function Sidebar({
   onDeleteSession: (session: ChatSessionOut) => void;
   onOpenDocuments: () => void;
   documentCount: number;
+  onOpenAccount: () => void;
 }) {
   const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
@@ -206,30 +208,36 @@ export default function Sidebar({
       </div>
 
       {/* User footer */}
-      <div className="border-t border-violet-100/70 px-3 py-3 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
-          {initial}
-        </div>
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-xs text-slate-500 truncate" title={user?.email}>
+      <div className="border-t border-violet-100/70 px-3 py-3 flex items-center gap-1">
+        <button
+          onClick={onOpenAccount}
+          className="flex-1 min-w-0 flex items-center gap-2.5 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-violet-50 transition-colors"
+          title="Account settings"
+        >
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+            {initial}
+          </div>
+          {!collapsed && (
+            <span className="flex-1 min-w-0 text-left text-xs text-slate-500 truncate" title={user?.email}>
               {user?.email}
             </span>
-            <button
-              onClick={signOut}
-              className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
-              title="Sign out"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-            </button>
-          </>
+          )}
+        </button>
+        {!collapsed && (
+          <button
+            onClick={signOut}
+            className="text-slate-400 hover:text-red-500 transition-colors shrink-0 p-1"
+            title="Sign out"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
         )}
       </div>
     </motion.aside>

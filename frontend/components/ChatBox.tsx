@@ -8,6 +8,7 @@ import ChatInput from "./ChatInput";
 import DocumentsPanel from "./DocumentsPanel";
 import MessageBubble, { Message } from "./MessageBubble";
 import PipelineView, { INITIAL_PIPELINE_STAGES, PipelineStage } from "./PipelineView";
+import AccountSettings from "./AccountSettings";
 
 export default function ChatBox() {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function ChatBox() {
   const [sessions, setSessions] = useState<ChatSessionOut[]>([]);
   const [activeCitation, setActiveCitation] = useState<CitationOut | null>(null);
   const [documentsOpen, setDocumentsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +196,7 @@ export default function ChatBox() {
         onDeleteSession={deleteSession}
         onOpenDocuments={() => setDocumentsOpen(true)}
         documentCount={documents.length}
+        onOpenAccount={() => setAccountOpen(true)}
       />
 
       <div className="flex-1 flex flex-col min-w-0 relative">
@@ -268,6 +271,8 @@ export default function ChatBox() {
           </>
         )}
       </div>
+
+      <AccountSettings open={accountOpen} onClose={() => setAccountOpen(false)} />
 
       <DocumentsPanel
         open={documentsOpen}

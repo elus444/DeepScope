@@ -33,15 +33,16 @@ export default function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
-      {/* Ambient orb */}
+      {/* Brand mark */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.7 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="relative mb-6 orb-float"
+        initial={{ opacity: 0, scale: 0.7, rotate: -8 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-violet-400 via-violet-600 to-fuchsia-500 flex items-center justify-center shadow-[0_10px_30px_rgba(139,92,246,0.4)]"
       >
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-300 via-violet-500 to-fuchsia-400 orb-glow blur-md absolute inset-0" />
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-400 via-violet-600 to-fuchsia-500 relative shadow-[0_0_60px_rgba(139,92,246,0.5)]" />
+        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
       </motion.div>
 
       <motion.h1
