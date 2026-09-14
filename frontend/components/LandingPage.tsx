@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 
@@ -6,27 +6,24 @@ const FEATURES = [
   {
     title: "Multi-agent pipeline",
     desc: "A research agent retrieves, a summarizer drafts, a critic checks it against the source, and an editor polishes the final answer — every step visible in real time.",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
-    ),
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />,
+    big: true,
   },
   {
     title: "Inline citations",
-    desc: "Every claim links back to the exact chunk it came from. Click a citation to see the source passage and match confidence side by side.",
+    desc: "Every claim links back to the exact chunk it came from, with match confidence shown side by side.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
     ),
   },
   {
     title: "Streamed answers",
-    desc: "Responses arrive token by token over a live SSE connection, with the pipeline stage lighting up as it works — no spinner, no waiting in the dark.",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
-    ),
+    desc: "Responses arrive token by token over a live connection, no spinner, no waiting in the dark.",
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />,
   },
   {
     title: "Private by design",
-    desc: "Row-level security is the only authorization boundary — every query runs under your own access token, so your documents are never visible to anyone else, including the server.",
+    desc: "Row-level security is the only authorization boundary — your documents are never visible to anyone else, including the server.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     ),
@@ -51,18 +48,39 @@ const STEPS = [
   },
 ];
 
+const TECH = ["Gemini 3", "LangGraph", "FastAPI", "Supabase", "pgvector", "Next.js", "framer-motion"];
+
 function GradientOrb({ className }: { className: string }) {
   return <div className={`rounded-full blur-3xl pointer-events-none ${className}`} />;
 }
 
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.221-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .268.18.58.688.482A10.02 10.02 0 0022 12.021C22 6.484 17.523 2 12 2z" />
+    </svg>
+  );
+}
+
+const REPO_URL = "https://github.com/elus444/DeepScope";
+
 export default function LandingPage() {
   const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: pageProgress } = useScroll();
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const previewY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const previewOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.4]);
 
+  const [spot, setSpot] = useState({ x: 50, y: 22 });
+
   return (
     <div className="relative overflow-x-hidden">
+      {/* Scroll progress */}
+      <motion.div
+        style={{ scaleX: pageProgress }}
+        className="fixed top-0 left-0 right-0 h-[3px] origin-left z-50 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500"
+      />
+
       {/* Nav */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/60 border-b border-violet-100/70">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -81,6 +99,15 @@ export default function LandingPage() {
             <a href="#how-it-works" className="hover:text-violet-700 transition-colors">
               How it works
             </a>
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 hover:text-violet-700 transition-colors"
+            >
+              <GitHubIcon className="w-4 h-4" />
+              Source
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/login" className="btn-ghost text-sm">
@@ -94,9 +121,35 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section ref={heroRef} className="relative max-w-6xl mx-auto px-6 pt-20 pb-28">
-        <GradientOrb className="absolute -top-20 -left-32 w-80 h-80 bg-violet-300/40" />
-        <GradientOrb className="absolute top-10 -right-24 w-72 h-72 bg-fuchsia-300/30" />
+      <section
+        ref={heroRef}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setSpot({
+            x: ((e.clientX - rect.left) / rect.width) * 100,
+            y: ((e.clientY - rect.top) / rect.height) * 100,
+          });
+        }}
+        className="relative max-w-6xl mx-auto px-6 pt-20 pb-28 overflow-hidden"
+      >
+        {/* Dot grid, faded at the edges */}
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.18) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)",
+            maskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)",
+          }}
+        />
+        {/* Mouse-reactive spotlight */}
+        <motion.div
+          animate={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+          transition={{ type: "spring", stiffness: 40, damping: 22 }}
+          className="absolute -z-10 w-[560px] h-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/25 blur-[110px] pointer-events-none"
+        />
+        <GradientOrb className="absolute -top-20 -left-32 w-80 h-80 bg-violet-300/40 -z-10" />
+        <GradientOrb className="absolute top-10 -right-24 w-72 h-72 bg-fuchsia-300/30 -z-10" />
 
         <div className="relative text-center max-w-3xl mx-auto">
           <motion.div
@@ -115,7 +168,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-            className="text-4xl sm:text-6xl font-semibold tracking-tight text-slate-900 leading-[1.08]"
+            className="text-5xl sm:text-7xl font-semibold tracking-tight text-slate-900 leading-[1.05]"
           >
             Ask your documents
             <br />
@@ -142,9 +195,19 @@ export default function LandingPage() {
               <motion.span
                 whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(124,58,237,0.4)" }}
                 whileTap={{ y: 0, scale: 0.98 }}
-                className="btn-primary inline-block text-[15px] !px-6 !py-3"
+                className="btn-primary inline-flex items-center gap-2 text-[15px] !px-6 !py-3 group"
               >
                 Get started free
+                <motion.svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  initial={{ x: 0 }}
+                  whileHover={{ x: 3 }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 12h14M13 6l6 6-6 6" />
+                </motion.svg>
               </motion.span>
             </Link>
             <Link href="/login">
@@ -169,16 +232,22 @@ export default function LandingPage() {
         >
           <div className="glass rounded-3xl p-3 shadow-[0_30px_80px_rgba(124,58,237,0.22)]">
             <div className="glass-solid rounded-2xl p-5 sm:p-6">
-              <div className="flex items-center gap-1.5 mb-5">
-                <span className="w-2.5 h-2.5 rounded-full bg-violet-300" />
-                <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
-                <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-300" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+                </div>
+                <span className="text-[11px] text-slate-400 px-2.5 py-1 rounded-full bg-violet-50/80 border border-violet-100">
+                  deepscope.app/chat
+                </span>
               </div>
 
               {/* user bubble */}
               <div className="flex justify-end mb-4">
                 <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-[0_6px_18px_rgba(124,58,237,0.3)]">
                   What was our Q3 churn rate, and why?
+                  <span className="caret-blink">|</span>
                 </div>
               </div>
 
@@ -193,7 +262,13 @@ export default function LandingPage() {
                     transition={{ delay: 0.5 + i * 0.12, duration: 0.35 }}
                     className="chip"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                    <motion.span
+                      initial={{ scale: 0.6 }}
+                      whileInView={{ scale: [0.6, 1.3, 1] }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.6 + i * 0.12, duration: 0.4 }}
+                      className="w-1.5 h-1.5 rounded-full bg-violet-500"
+                    />
                     {s}
                   </motion.span>
                 ))}
@@ -217,6 +292,22 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      {/* Tech marquee */}
+      <section className="py-10 border-y border-violet-100/70 bg-white/40">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-5">
+          Built on a real production stack
+        </p>
+        <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
+          <div className="flex w-max animate-marquee gap-12">
+            {[...TECH, ...TECH].map((t, i) => (
+              <span key={i} className="text-lg font-semibold text-slate-300 shrink-0 select-none">
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
@@ -226,14 +317,56 @@ export default function LandingPage() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-lg mx-auto mb-14"
         >
-          <h2 className="text-3xl font-semibold text-slate-900">Built to be trusted, not just fast</h2>
+          <h2 className="text-3xl sm:text-4xl font-semibold text-slate-900">
+            Built to be trusted, not just fast
+          </h2>
           <p className="text-slate-500 mt-3">
             Every layer of DeepScope exists to make the answer verifiable, not just confident-sounding.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {FEATURES.map((f, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* Big feature */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            whileHover={{ y: -4, boxShadow: "0 20px 44px rgba(124,58,237,0.18)" }}
+            className="sm:col-span-2 glass-solid rounded-2xl p-7 transition-shadow"
+          >
+            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {FEATURES[0].icon}
+              </svg>
+            </div>
+            <h3 className="font-semibold text-lg text-slate-800 mb-2">{FEATURES[0].title}</h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-6 max-w-md">{FEATURES[0].desc}</p>
+
+            {/* mini flow visual */}
+            <div className="flex items-center flex-wrap gap-2">
+              {["Research", "Summarize", "Critique", "Finalize"].map((s, i, arr) => (
+                <div key={s} className="flex items-center gap-2">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1, duration: 0.35 }}
+                    className="chip !bg-white"
+                  >
+                    {s}
+                  </motion.span>
+                  {i < arr.length - 1 && (
+                    <svg className="w-3.5 h-3.5 text-violet-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {FEATURES.slice(1).map((f, i) => (
             <motion.div
               key={f.title}
               initial={{ opacity: 0, y: 20 }}
@@ -264,11 +397,19 @@ export default function LandingPage() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-lg mx-auto mb-16"
         >
-          <h2 className="text-3xl font-semibold text-slate-900">Three steps, start to answer</h2>
+          <h2 className="text-3xl sm:text-4xl font-semibold text-slate-900">Three steps, start to answer</h2>
         </motion.div>
 
         <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-10">
-          <div className="hidden sm:block absolute top-6 left-[16.5%] right-[16.5%] h-px bg-violet-200" />
+          <div className="hidden sm:block absolute top-6 left-[16.5%] right-[16.5%] h-px bg-violet-200 overflow-hidden">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
+              className="h-full origin-left bg-gradient-to-r from-violet-400 to-violet-600"
+            />
+          </div>
           {STEPS.map((s, i) => (
             <motion.div
               key={s.n}
@@ -288,8 +429,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Dark contrast statement */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 py-28">
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
+            backgroundSize: "26px 26px",
+          }}
+        />
+        <GradientOrb className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/20" />
+        <GradientOrb className="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-500/20" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6 }}
+          className="relative max-w-2xl mx-auto text-center px-6"
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-5">
+            Why it's built this way
+          </p>
+          <p className="text-2xl sm:text-3xl font-medium text-white leading-snug">
+            An answer you can't verify isn't an answer.
+            <span className="text-violet-300"> It's a guess with good formatting.</span>
+          </p>
+        </motion.div>
+      </section>
+
       {/* Final CTA */}
-      <section className="max-w-6xl mx-auto px-6 pb-24">
+      <section className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -329,6 +498,15 @@ export default function LandingPage() {
             <span className="text-slate-500 font-medium">DeepScope</span>
           </div>
           <p>© {new Date().getFullYear()} DeepScope. Built with a multi-agent RAG pipeline.</p>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 hover:text-violet-600 transition-colors"
+          >
+            <GitHubIcon className="w-4 h-4" />
+            View source
+          </a>
         </div>
       </footer>
     </div>
