@@ -20,3 +20,8 @@ lxml
 # Data Validation & Configuration
 pydantic
 python-dotenv
+
+# Testing (see tests/ -- run with: pytest)
+pytest
+pytest-timeout
+httpx

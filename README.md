@@ -197,6 +197,37 @@ All endpoints below (except `/health` and `/workflow/diagram`) require `Authoriz
 
 ---
 
+## ✅ Testing
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env   # fill in SUPABASE_URL / SUPABASE_ANON_KEY (and GEMINI_API_KEY for the upload test)
+pytest
+```
+
+Most of this app's real authorization boundary is Postgres Row Level
+Security, not application code (see `utils/supabase_auth.py`) — a test
+that mocks the Supabase client can only prove the mock behaves as
+instructed, not that RLS actually blocks cross-user access. So
+`tests/test_rls_isolation.py` runs against the **real** configured
+Supabase project with two real, disposable throwaway accounts (created
+fresh per run against Supabase's public signup endpoint — this project
+has email confirmation disabled, so no email round-trip is needed) and
+proves things like:
+
+- one user's `GET /documents` never includes another user's upload
+- `DELETE /documents/{id}` on someone else's document 404s, not 200s
+- one user's chat sessions and message history are invisible to another
+
+The rest of the suite covers the parts that genuinely are pure Python:
+citation-numbering (`test_citations.py`), the auth-header/JWT parsing
+that gates every request before Supabase is ever called
+(`test_auth_deps.py`), and basic API contracts like "every protected
+endpoint 401s without a token" (`test_api_contracts.py`).
+
+---
+
 ## 🧠 Multi-Agent Workflow
 
 The system uses a sophisticated multi-agent pipeline:
