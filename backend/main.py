@@ -5,9 +5,11 @@ import tempfile
 import time
 
 import uvicorn
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from supabase import Client
 
 from agents.orchestrator import Orchestrator
@@ -21,9 +23,18 @@ from models.schemas import (
 from utils.document_parser import extract_text_from_file, chunk_text, SUPPORTED_EXTENSIONS
 from utils.embeddings import get_embedding
 from utils.logger import api_logger
+from utils.rate_limit import limiter
 from utils.supabase_auth import get_supabase, get_user_id
 
 app = FastAPI(title="DeepScope API")
+
+# Basic API rate limiting -- see utils/rate_limit.py for the per-user
+# (falling back to per-IP) key. A 100/minute default covers ordinary
+# use; the two endpoints that call an external LLM (upload's embedding
+# step, and asking a question) get tighter limits below since those are
+# the ones actually worth protecting from abuse or a runaway client.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS: use FRONTEND_URL env var in production, allow all in dev
 frontend_url = os.getenv("FRONTEND_URL")
@@ -63,7 +74,9 @@ def list_documents(supabase: Client = Depends(get_supabase)):
 
 
 @app.post("/documents", response_model=DocumentOut)
+@limiter.limit("10/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     supabase: Client = Depends(get_supabase),
 ):
@@ -324,7 +337,9 @@ def _stream_ask(session_id: str, req: AskRequest, supabase: Client):
 
 
 @app.post("/chat/sessions/{session_id}/messages")
+@limiter.limit("20/minute")
 def ask(
+    request: Request,
     session_id: str,
     req: AskRequest,
     supabase: Client = Depends(get_supabase),

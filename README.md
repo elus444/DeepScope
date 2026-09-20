@@ -223,8 +223,23 @@ proves things like:
 The rest of the suite covers the parts that genuinely are pure Python:
 citation-numbering (`test_citations.py`), the auth-header/JWT parsing
 that gates every request before Supabase is ever called
-(`test_auth_deps.py`), and basic API contracts like "every protected
-endpoint 401s without a token" (`test_api_contracts.py`).
+(`test_auth_deps.py`), basic API contracts like "every protected
+endpoint 401s without a token" (`test_api_contracts.py`), and API rate
+limiting (`test_rate_limit.py`).
+
+---
+
+## 🚦 Rate Limiting
+
+Every endpoint is rate-limited per user (falling back to per-IP for
+unauthenticated requests), via [slowapi](https://github.com/laurentS/slowapi)
+keyed on the caller's Supabase user id — see `utils/rate_limit.py`. A
+generous 100/minute default covers ordinary use; the two endpoints
+that call an external LLM get tighter limits since they're the ones
+actually worth protecting from abuse or a runaway client:
+
+- `POST /documents` (upload → chunk → embed) — 10/minute
+- `POST /chat/sessions/{id}/messages` (the agent pipeline) — 20/minute
 
 ---
 
